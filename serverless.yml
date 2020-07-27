@@ -1,0 +1,33 @@
+service: stat
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: prod
+  region: us-east-2
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
+
+functions:
+  refreshData:
+    handler: stat/service.refreshData
+    timeout: 300
+    events:
+      - schedule: cron(0 3 * * ? *)
+
+  apiProxyHandler:
+    handler: stat/api.apiProxyHandler
+    timeout: 30
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+
+plugins:
+  - serverless-offline

@@ -1,0 +1,20 @@
+{
+  "name": "ghrv-serverless",
+  "version": "1.0.0",
+  "dependencies": {
+    "@octokit/rest": "^18.0.1",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "serverless-http": "^2.5.0"
+  },
+  "scripts": {
+    "debug": "node --inspect node_modules/serverless/bin/serverless.js offline"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.718.0",
+    "serverless": "^1.75.1",
+    "serverless-offline": "^6.5.0"
+  }
+}
