@@ -15,7 +15,7 @@ app.use(cors());
 app.get('/allStatsGrouped', async (req, res) => {
     let yesterday = moment().subtract(1, 'day');
 
-    let fromDate = req.query.fromDate ? moment(req.query.fromDate, DATE_FORMAT, true) : moment().startOf('month');
+    let fromDate = req.query.fromDate ? moment(req.query.fromDate, DATE_FORMAT, true) : yesterday.clone().subtract(1, 'month');
     let toDate = req.query.toDate ? moment(req.query.toDate, DATE_FORMAT, true) : yesterday;
 
     if (!fromDate.isValid() || !toDate.isValid()) {
