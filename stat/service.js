@@ -5,45 +5,34 @@ const octokit = new Octokit({ auth: process.env['GH.AUTH.TOKEN'] });
 const GH_ORG = process.env['GH.ORG'];
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const moment = require('moment');
 
-function getCleanedISOString(date) {
-    date.setHours(0, 0, 0, 0);
-    var timezoneOffset = date.getTimezoneOffset() * 60000;
-    return (new Date(date - timezoneOffset)).toISOString();
-}
+global.DATE_FORMAT = 'YYYY-MM-DD';
 
 exports.getStatsBetweenDates = async function (minDate, maxDate) {
     return (await
         dynamoDb.scan(
             {
                 TableName: 'stat',
-                ExpressionAttributeValues: { ':minDate': getCleanedISOString(minDate), ':maxDate': getCleanedISOString(maxDate) },
+                ExpressionAttributeValues: { ':minDate': minDate.format(DATE_FORMAT), ':maxDate': maxDate.format(DATE_FORMAT) },
                 FilterExpression: 'statDate between :minDate and :maxDate'
             }).promise()).Items;
 }
 
 exports.getStatsBetweenDatesGroupedByRepoName = async function (minDate, maxDate) {
     let stats = await exports.getStatsBetweenDates(minDate, maxDate);
-
     stats = stats.reduce(function (acc, curr) {
         let repoName = curr.repoName;
-
         delete curr['repoName'];
-        delete curr['id'];
-
         acc[repoName] = acc[repoName] || [];
         acc[repoName].push(curr);
-
         return acc;
     }, Object.create(null));
-
     return stats;
 }
 
 exports.refreshData = async function () {
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    let today = moment();
     let repoNames = await exports.getAllPublicRepoNames();
 
     for (const repoName of repoNames) {
@@ -51,11 +40,9 @@ exports.refreshData = async function () {
             let viewTraffic = await octokit.repos.getViews({ owner: GH_ORG, repo: repoName, per: 'day' });
 
             for (const view of viewTraffic.data.views) {
-                let formattedDate = new Date(view.timestamp);
-                let formattedDateString = getCleanedISOString(formattedDate);
-
-                if (formattedDate < today) {
-                    insert({ count: view.count, uniques: view.uniques, statDate: formattedDateString, repoName: repoName });
+                let timestamp = moment(view.timestamp);
+                if (timestamp.isBefore(today, 'day')) {
+                    insert({ count: view.count, uniques: view.uniques, statDate: timestamp.format(DATE_FORMAT), repoName: repoName });
                 }
             }
 
@@ -79,7 +66,7 @@ exports.getAllPublicRepoNames = async function () {
             });
 
         let data = ghResponse.data;
-        if (!data || data.length == 0) {
+        if (!data || data.length === 0) {
             break;
         } else {
             page++;
@@ -94,6 +81,8 @@ function insert(item) {
     dynamoDb.put({ TableName: 'stat', Item: item }, (err, data) => {
         if (err) {
             console.log('an error occured while inserting: ', err);
+        } else {
+            console.log('inserting new record...');
         }
     });
 }

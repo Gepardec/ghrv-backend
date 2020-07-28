@@ -1,49 +1,33 @@
 require('dotenv').config();
 
+const {getStatsBetweenDatesGroupedByRepoName} = require('./service');
+const moment = require('moment');
+
 const serverless = require('serverless-http');
 const bodyParser = require('body-parser');
 const express = require('express');
-const { getStatsBetweenDatesGroupedByRepoName } = require('./service');
 const cors = require('cors');
 const app = express();
 
-app.use(bodyParser.json({ strict: false }));
+app.use(bodyParser.json({strict: false}));
 app.use(cors());
 
 app.get('/allStatsGrouped', async (req, res) => {
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (today.getDate() === 1) {
-        today.setDate(today.getDate() - 1);
+    let yesterday = moment().subtract(1, 'day');
+
+    let fromDate = req.query.fromDate ? moment(req.query.fromDate, DATE_FORMAT, true) : moment().startOf('month');
+    let toDate = req.query.toDate ? moment(req.query.toDate, DATE_FORMAT, true) : yesterday;
+
+    if (!fromDate.isValid() || !toDate.isValid()) {
+        return res.status(400).json({error: `provide correct date values in ${DATE_FORMAT}`});
     }
 
-    let firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    let fromDate;
-    let toDate;
-
-    fromDate = req.query.fromDate ? Date.parse(req.query.fromDate) : firstDayOfCurrentMonth;
-    toDate = req.query.toDate ? Date.parse(req.query.toDate) : today;
-
-    if (isNaN(fromDate) || isNaN(toDate)) {
-        return res.status(400).json({ error: 'provide correct date values' });
+    if (fromDate.isAfter(yesterday, 'day') || toDate.isAfter(yesterday, 'day')) {
+        return res.status(400).json({error: 'fromDate and toDate can be max yesterday'});
     }
 
-    fromDate = new Date(fromDate);
-    toDate = new Date(toDate);
-    fromDate.setHours(0, 0, 0, 0);
-    toDate.setHours(0, 0, 0, 0);
-
-    if (fromDate > toDate) {
-        res.status(400).json({ error: 'fromDate must be less than or equal to toDate. If toDate is not provided, it will be today' });
-    }
-
-    if (fromDate > today) {
-        fromDate = new Date(firstDayOfCurrentMonth);
-    }
-
-    if (toDate > today) {
-        toDate = new Date(today);
+    if (fromDate.isAfter(toDate, 'day')) {
+        return res.status(400).json({error: 'fromDate must be less than or equal to toDate'});
     }
 
     let stats = await getStatsBetweenDatesGroupedByRepoName(fromDate, toDate);
