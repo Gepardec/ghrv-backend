@@ -1,13 +1,11 @@
-require('dotenv').config();
-
 const { Octokit } = require('@octokit/rest');
-const octokit = new Octokit({ auth: process.env['GH.AUTH.TOKEN'] });
-const GH_ORG = process.env['GH.ORG'];
+const octokit = new Octokit({ auth: process.env['GH_TOKEN'] });
+const GH_ORG = process.env['GH_ORG'];
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const moment = require('moment');
 
-global.DATE_FORMAT = 'YYYY-MM-DD';
+global.DATE_FORMAT = 'YYYY-MM-DD' ;
 
 exports.getStatsBetweenDates = async function (minDate, maxDate) {
     return (await

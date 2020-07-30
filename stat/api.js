@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const {getStatsBetweenDatesGroupedByRepoName} = require('./service');
 const moment = require('moment');
 

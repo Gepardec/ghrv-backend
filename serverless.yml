@@ -19,6 +19,9 @@ functions:
   refreshData:
     handler: stat/service.refreshData
     timeout: 300
+    environment:
+      GH_TOKEN: ${ssm:/GH_TOKEN~true}
+      GH_ORG: gepardec
     events:
       - schedule: cron(0 3 * * ? *)
 
