@@ -1,18 +1,21 @@
-const { Octokit } = require('@octokit/rest');
-const octokit = new Octokit({ auth: process.env['GH_TOKEN'] });
+const {Octokit} = require('@octokit/rest');
+const octokit = new Octokit({auth: process.env['GH_TOKEN']});
 const GH_ORG = process.env['GH_ORG'];
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const moment = require('moment');
 
-global.DATE_FORMAT = 'YYYY-MM-DD' ;
+global.DATE_FORMAT = 'YYYY-MM-DD';
 
 exports.getStatsBetweenDates = async function (minDate, maxDate) {
     return (await
         dynamoDb.scan(
             {
                 TableName: 'stat',
-                ExpressionAttributeValues: { ':minDate': minDate.format(DATE_FORMAT), ':maxDate': maxDate.format(DATE_FORMAT) },
+                ExpressionAttributeValues: {
+                    ':minDate': minDate.format(DATE_FORMAT),
+                    ':maxDate': maxDate.format(DATE_FORMAT)
+                },
                 FilterExpression: 'statDate between :minDate and :maxDate'
             }).promise()).Items;
 }
@@ -35,12 +38,17 @@ exports.refreshData = async function () {
 
     for (const repoName of repoNames) {
         try {
-            let viewTraffic = await octokit.repos.getViews({ owner: GH_ORG, repo: repoName, per: 'day' });
+            let viewTraffic = await octokit.repos.getViews({owner: GH_ORG, repo: repoName, per: 'day'});
 
             for (const view of viewTraffic.data.views) {
                 let timestamp = moment(view.timestamp);
                 if (timestamp.isBefore(today, 'day')) {
-                    insert({ count: view.count, uniques: view.uniques, statDate: timestamp.format(DATE_FORMAT), repoName: repoName });
+                    insert({
+                        totalViews: view.count,
+                        uniqueViews: view.uniques,
+                        statDate: timestamp.format(DATE_FORMAT),
+                        repoName: repoName
+                    });
                 }
             }
 
@@ -76,7 +84,7 @@ exports.getAllPublicRepoNames = async function () {
 }
 
 function insert(item) {
-    dynamoDb.put({ TableName: 'stat', Item: item }, (err, data) => {
+    dynamoDb.put({TableName: 'stat', Item: item}, (err, data) => {
         if (err) {
             console.log('an error occured while inserting: ', err);
         } else {
