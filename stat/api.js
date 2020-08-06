@@ -13,11 +13,11 @@ app.use(cors());
 app.get('/allStatsGrouped', async (req, res) => {
     let yesterday = moment().subtract(1, 'day');
 
-    let fromDate = req.query.fromDate ? moment(req.query.fromDate, DATE_FORMAT, true) : yesterday.clone().subtract(1, 'month');
-    let toDate = req.query.toDate ? moment(req.query.toDate, DATE_FORMAT, true) : yesterday;
+    let fromDate = moment(req.query.fromDate, DATE_FORMAT, true);
+    let toDate = moment(req.query.toDate, DATE_FORMAT, true);
 
     if (!fromDate.isValid() || !toDate.isValid()) {
-        return res.status(400).json({error: `provide correct date values in ${DATE_FORMAT}`});
+        return res.status(400).json({error: `provide correct date values (fromDate=...&toDate=...) in ${DATE_FORMAT}`});
     }
 
     if (fromDate.isAfter(yesterday, 'day') || toDate.isAfter(yesterday, 'day')) {
