@@ -6,12 +6,13 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const moment = require('moment');
 
 global.DATE_FORMAT = 'YYYY-MM-DD';
+const TABLE_NAME = process.env['TABLE_NAME'];
 
 exports.getStatsBetweenDates = async function (minDate, maxDate) {
     return (await
         dynamoDb.scan(
             {
-                TableName: process.env['TABLE_NAME'],
+                TableName: TABLE_NAME,
                 ExpressionAttributeValues: {
                     ':minDate': minDate.format(DATE_FORMAT),
                     ':maxDate': maxDate.format(DATE_FORMAT)
@@ -84,7 +85,7 @@ exports.getAllPublicRepoNames = async function () {
 }
 
 function insert(item) {
-    dynamoDb.put({TableName: 'stat', Item: item}, (err, data) => {
+    dynamoDb.put({TableName: TABLE_NAME, Item: item}, (err, data) => {
         if (err) {
             console.log('an error occured while inserting: ', err);
         } else {
