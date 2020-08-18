@@ -5,6 +5,8 @@ provider:
   runtime: nodejs12.x
   stage: prod
   region: us-east-2
+  environment:
+    TABLE_NAME: ${opt:TABLE_NAME, 'stat'}
 
   iamRoleStatements:
     - Effect: Allow
@@ -16,7 +18,7 @@ provider:
       Resource: "*"
 
 functions:
-  refreshData:
+  cronFetchGhData:
     handler: stat/service.refreshData
     timeout: 300
     environment:
@@ -25,7 +27,7 @@ functions:
     events:
       - schedule: cron(0 3 * * ? *)
 
-  apiProxyHandler:
+  restApi:
     handler: stat/api.apiProxyHandler
     timeout: 30
     events:
