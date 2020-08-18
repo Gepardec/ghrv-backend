@@ -1,9 +1,20 @@
+dist: bionic
 language: node_js
 node_js:
   - node
 cache:
   directories:
     - node_modules
-script:
+install:
   - npm install -g serverless
-  - sls deploy
+  - npm install -g serverless-offline
+  - npm install --save-dev
+deploy:
+  - provider: script
+    script: sls deploy --TABLE_NAME stat-develop  --stage develop
+    on:
+      branch: develop
+  - provider: script
+    script: sls deploy
+    on:
+      branch: master
