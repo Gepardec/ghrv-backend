@@ -7,14 +7,12 @@ cache:
     - node_modules
 install:
   - npm install -g serverless
-  - npm install -g serverless-offline
-  - npm install --save-dev
-deploy:
-  - provider: script
-    script: sls deploy --TABLE_NAME stat-develop  --stage develop
-    on:
-      branch: develop
-  - provider: script
-    script: sls deploy
-    on:
-      branch: master
+  - npm install
+jobs:
+  include:
+    - name: master branch
+      script: sls deploy
+      if: branch = master
+    - name: develop branch
+      script: sls deploy --TABLE_NAME stat-develop  --stage develop
+      if: branch = develop

@@ -11,7 +11,7 @@ exports.getStatsBetweenDates = async function (minDate, maxDate) {
     return (await
         dynamoDb.scan(
             {
-                TableName: 'stat',
+                TableName: process.env['TABLE_NAME'],
                 ExpressionAttributeValues: {
                     ':minDate': minDate.format(DATE_FORMAT),
                     ':maxDate': maxDate.format(DATE_FORMAT)
